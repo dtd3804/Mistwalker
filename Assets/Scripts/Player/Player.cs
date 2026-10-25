@@ -16,8 +16,8 @@ public class Player : MonoBehaviour
 
     // JUMP
     [Header("Jump")]
-    public float jumpForce = 7.5f;
-    public float jumpContinuesForce = 0.5f;
+    public float jumpForce = 8f;
+    public float jumpContinuesForce = 150f;
     public int extraJumpValue = 1;
     public float coyoteTime = 0.2f;
     public float jumpBufferTime = 0.15f;
@@ -69,7 +69,7 @@ public class Player : MonoBehaviour
     private float dashDirection;
 
     [Header("Bounce Pad")]
-    public float bouncePadForce = 15f;
+    public float bouncePadForce = 10f;
 
 
 
