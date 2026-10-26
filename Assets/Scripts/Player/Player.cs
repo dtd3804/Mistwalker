@@ -1,26 +1,17 @@
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
+    // DATA
+    [Header("Data")]
+    public PlayerData data;
+
     // STATS
     [Header("Stats")]
     public int coins;
     public int health = 100;
-
-    // MOVEMENT
-    [Header("Movement")]
-    public float moveSpeed = 3f;
-
-    // JUMP
-    [Header("Jump")]
-    public float jumpForce = 8f;
-    public float jumpContinuesForce = 150f;
-    public int extraJumpValue = 1;
-    public float coyoteTime = 0.2f;
-    public float jumpBufferTime = 0.15f;
 
     // GROUND CHECK
     [Header("Ground Check")]
@@ -33,10 +24,21 @@ public class Player : MonoBehaviour
     public AudioClip jumpClip;
     public AudioClip hurtClip;
 
+    [Header("Combat")]
+    public float invincibilityDuration = 0.5f;
+    private float invincibilityTimer;
+
+    [Header("Bounce Pad")]
+    public float bouncePadForce = 15f;
+
+    // DEBUG
+    [Header("Debug")]
+    public bool debugUnlockAllSkills = true;
+
     // COMPONENT REFERENCES
     private Rigidbody2D rb;
     private Animator animator;
-    private SpriteRenderer spriteRenderer;
+    private SpriteRenderer[] spriteRenderers;
     private AudioSource audioSource;
     private PlayerFight playerFight;
     private PlayerActionLock actionLock;
@@ -45,31 +47,32 @@ public class Player : MonoBehaviour
     // RUNTIME STATE
     private bool isGround;
     private float moveInput;
+    private bool isFacingRight = true;
 
     private int extraJump;
     private float coyoteTimeCounter;
     private float jumpBufferCounter;
+    private bool isJumping;
+    private bool isJumpFalling;
+    private bool isJumpCut;
 
-    private const float DEATH_HEIGHT = -40f;
+    private bool isDashing;
+    private float dashTimer;
+    private float dashCooldownTimer;
+    private float dashDirection;
+
     private const int MAX_HEALTH = 100;
     private const int DEFAULT_DAMAGE_AMOUNT = 10;
     private const float DEFAULT_KNOCKBACK_FORCE = 7.5f;
     private const float DEFAULT_KNOCKBACK_UP_FORCE = 3f;
     private const float DEFAULT_KNOCKBACK_LOCK_DURATION = 0.1f;
 
-    [Header("Combat")]
-    public float invincibilityDuration = 0.5f;
-    private float invincibilityTimer;
+    public bool IsFacingRight => isFacingRight;
+    public bool IsDashing => isDashing;
 
-    [Header("Dash")]
-    public float forwardDashSpeed = 12f;
-    public float forwardDashDuration = 0.15f;
-    private bool isDashing;
-    private float dashTimer;
-    private float dashDirection;
-
-    [Header("Bounce Pad")]
-    public float bouncePadForce = 10f;
+    // SKILL UNLOCK
+    private bool HasDash => debugUnlockAllSkills || GameManager.Instance.data.hasDash;
+    private int MaxExtraJump => (debugUnlockAllSkills || GameManager.Instance.data.hasDoubleJump) ? 1 : 0;
 
 
 
@@ -77,7 +80,7 @@ public class Player : MonoBehaviour
     void Start()
     {
         CacheComponents();
-        extraJump = extraJumpValue;
+        extraJump = MaxExtraJump;
     }
 
     void Update()
@@ -88,14 +91,15 @@ public class Player : MonoBehaviour
         UpdateGroundedTimers();
         UpdateJumpBuffer();
         TryConsumeJump();
-        ApplyJumpHold();
+        UpdateJumpState();
+
+        TryDash();
+        UpdateDash();
 
         UpdateAnimation();
         UpdateGravity();
         UpdateHealthUI();
         UpdateInvincibility();
-        UpdateDash();
-        CheckFallDeath();
     }
 
     private void FixedUpdate()
@@ -144,8 +148,8 @@ public class Player : MonoBehaviour
     private void CacheComponents()
     {
         rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponentInChildren<Animator>();
+        spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
         audioSource = GetComponent<AudioSource>();
         playerFight = GetComponent<PlayerFight>();
         actionLock = GetComponent<PlayerActionLock>();
@@ -159,7 +163,7 @@ public class Player : MonoBehaviour
     private void ReadMoveInput()
     {
         bool blocked = (actionLock != null && actionLock.IsLocked) || isDashing;
-        moveInput = blocked ? 0f : Input.GetAxis("Horizontal");
+        moveInput = blocked ? 0f : Input.GetAxisRaw("Horizontal");
     }
 
     private void UpdateFacingDirection()
@@ -169,26 +173,56 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if (Mathf.Abs(rb.linearVelocityX) > 0.01f)
+        if (isDashing || (playerFight != null && playerFight.IsAttacking))
         {
-            spriteRenderer.flipX = rb.linearVelocityX < 0f;
+            return;
         }
+
+        if (moveInput > 0f && !isFacingRight)
+        {
+            Turn();
+        }
+        else if (moveInput < 0f && isFacingRight)
+        {
+            Turn();
+        }
+    }
+
+    private void Turn()
+    {
+        Vector3 scale = transform.localScale;
+        scale.x *= -1f;
+        transform.localScale = scale;
+
+        isFacingRight = !isFacingRight;
     }
 
     private void ApplyHorizontalMovement()
     {
         if (isDashing)
         {
-            rb.linearVelocity = new Vector2(dashDirection * forwardDashSpeed, 0f);
+            rb.linearVelocity = new Vector2(dashDirection * data.dashSpeed, 0f);
             return;
         }
 
-        rb.AddForce(new Vector2(moveInput * moveSpeed * 50f, 0f), ForceMode2D.Force);
+        float targetSpeed = moveInput * data.runMaxSpeed;
+        bool hasInput = Mathf.Abs(targetSpeed) > 0.01f;
 
-        rb.linearVelocity = new Vector2(
-            Mathf.Clamp(rb.linearVelocity.x, -moveSpeed, moveSpeed),
-            rb.linearVelocity.y
-        );
+        float accelRate = hasInput ? data.RunAccelAmount : data.RunDeccelAmount;
+
+        if (!isGround)
+        {
+            accelRate *= hasInput ? data.accelInAir : data.deccelInAir;
+        }
+
+        if (IsInJumpHang())
+        {
+            accelRate *= data.jumpHangAccelerationMult;
+            targetSpeed *= data.jumpHangMaxSpeedMult;
+        }
+
+        float speedDif = targetSpeed - rb.linearVelocityX;
+        rb.AddForce(new Vector2(speedDif * accelRate * rb.mass, 0f), ForceMode2D.Force);
     }
 
     private void CheckGrounded()
@@ -201,10 +235,10 @@ public class Player : MonoBehaviour
     // JUMP
     private void UpdateGroundedTimers()
     {
-        if (isGround)
+        if (isGround && !isJumping)
         {
-            coyoteTimeCounter = coyoteTime;
-            extraJump = extraJumpValue;
+            coyoteTimeCounter = data.coyoteTime;
+            extraJump = MaxExtraJump;
         }
         else
         {
@@ -216,7 +250,7 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            jumpBufferCounter = jumpBufferTime;
+            jumpBufferCounter = data.jumpBufferTime;
         }
         else
         {
@@ -231,7 +265,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if (actionLock != null && actionLock.IsLocked)
+        if ((actionLock != null && actionLock.IsLocked) || isDashing)
         {
             return;
         }
@@ -252,28 +286,107 @@ public class Player : MonoBehaviour
 
     private void DoJump()
     {
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, data.JumpVelocity);
+
+        isJumping = true;
+        isJumpFalling = false;
+        isJumpCut = false;
+
         PlaySFX(jumpClip);
     }
 
-    private void ApplyJumpHold()
+    private void UpdateJumpState()
     {
-        if (Input.GetKey(KeyCode.Space) && rb.linearVelocityY > 0)
+        // Tha space khi dang bay: tat nhay
+        if (!Input.GetKey(KeyCode.Space) && isJumping && rb.linearVelocityY > 0f)
         {
-            rb.AddForceY(jumpContinuesForce * Time.deltaTime);
+            isJumpCut = true;
         }
+
+        // Chuyen sang trag thai roi sau nhay
+        if (isJumping && rb.linearVelocityY <= 0f)
+        {
+            isJumping = false;
+            isJumpFalling = true;
+        }
+
+        if (isGround && !isJumping)
+        {
+            isJumpFalling = false;
+            isJumpCut = false;
+        }
+    }
+
+    private bool IsInJumpHang()
+    {
+        return (isJumping || isJumpFalling) && Mathf.Abs(rb.linearVelocityY) < data.jumpHangTimeThreshold;
     }
 
     private void UpdateGravity()
     {
-        rb.gravityScale = rb.linearVelocityY < 0 ? 2f : 1.5f;
+        if (isDashing)
+        {
+            rb.gravityScale = 0f;
+            return;
+        }
+
+        float gravityScale = data.GravityScale;
+
+        if (isJumpCut)
+        {
+            gravityScale *= data.jumpCutGravityMult;
+        }
+        else if (IsInJumpHang())
+        {
+            gravityScale *= data.jumpHangGravityMult;
+        }
+        else if (rb.linearVelocityY < 0f)
+        {
+            gravityScale *= data.fallGravityMult;
+        }
+
+        rb.gravityScale = gravityScale;
+
+        if (rb.linearVelocityY < -data.maxFallSpeed)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocityX, -data.maxFallSpeed);
+        }
     }
 
-    public void StartDash(float direction)
+
+
+    // DASH
+    private void TryDash()
     {
+        if (dashCooldownTimer > 0f)
+        {
+            dashCooldownTimer -= Time.deltaTime;
+        }
+
+        if (!Input.GetMouseButtonDown(1))
+        {
+            return;
+        }
+
+        if (!HasDash || isDashing || dashCooldownTimer > 0f)
+        {
+            return;
+        }
+
+        if (actionLock != null && actionLock.IsLocked)
+        {
+            return;
+        }
+
+        if (playerFight != null && playerFight.IsAttacking)
+        {
+            return;
+        }
+
         isDashing = true;
-        dashDirection = direction;
-        dashTimer = forwardDashDuration;
+        dashDirection = isFacingRight ? 1f : -1f;
+        dashTimer = data.dashDuration;
+        dashCooldownTimer = data.dashCooldown;
     }
 
     private void UpdateDash()
@@ -298,6 +411,12 @@ public class Player : MonoBehaviour
     {
         if (playerFight != null && playerFight.IsAttacking)
         {
+            return;
+        }
+
+        if (isDashing && animator.HasState(0, Animator.StringToHash("Player_Dash")))
+        {
+            animator.Play("Player_Dash");
             return;
         }
 
@@ -332,13 +451,14 @@ public class Player : MonoBehaviour
         PlaySFX(hurtClip);
         health -= amount;
 
-        float pushDirection = transform.position.x < sourcePosition.x ? -1f : 1f;
-        rb.linearVelocity = new Vector2(pushDirection * knockbackForce, knockbackUpForce);
+        // KNOCKBACK
+        // float pushDirection = transform.position.x < sourcePosition.x ? -1f : 1f;
+        // rb.linearVelocity = new Vector2(pushDirection * knockbackForce, knockbackUpForce);
 
-        if (actionLock != null)
-        {
-            actionLock.Lock(lockDuration);
-        }
+        // if (actionLock != null)
+        // {
+        //     actionLock.Lock(lockDuration);
+        // }
 
         invincibilityTimer = invincibilityDuration;
 
@@ -353,20 +473,23 @@ public class Player : MonoBehaviour
     private void HandleBouncePad()
     {
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, bouncePadForce);
+
+        isJumping = false;
+        isJumpCut = false;
     }
 
     private IEnumerator BlinkRed()
     {
-        spriteRenderer.color = Color.red;
+        SetSpriteColor(Color.red);
         yield return new WaitForSeconds(0.1f);
-        spriteRenderer.color = Color.white;
+        SetSpriteColor(Color.white);
     }
 
-    private void CheckFallDeath()
+    private void SetSpriteColor(Color color)
     {
-        if (transform.position.y < DEATH_HEIGHT)
+        foreach (SpriteRenderer sr in spriteRenderers)
         {
-            Die();
+            sr.color = color;
         }
     }
 

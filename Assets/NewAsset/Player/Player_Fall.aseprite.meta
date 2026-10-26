@@ -129,7 +129,7 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: Frame_0
     originalName: 
-    pivot: {x: 0.5, y: -0.04761905}
+    pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -150,7 +150,7 @@ ScriptedImporter:
     uvTransform: {x: 4, y: 62}
   - name: Frame_1
     originalName: 
-    pivot: {x: 0.5151515, y: -0.04761905}
+    pivot: {x: 0.5151515, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -171,7 +171,7 @@ ScriptedImporter:
     uvTransform: {x: 4, y: 33}
   - name: Frame_2
     originalName: 
-    pivot: {x: 0.5, y: -0.04761905}
+    pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -192,7 +192,7 @@ ScriptedImporter:
     uvTransform: {x: 4, y: 91}
   - name: Frame_3
     originalName: 
-    pivot: {x: 0.5294118, y: -0.04761905}
+    pivot: {x: 0.5294118, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -231,7 +231,7 @@ ScriptedImporter:
       additiveSortOrder: 0
       cellRect:
         x: 16
-        y: 1
+        y: 0
         width: 32
         height: 21
       spriteId: 8123ed9114199d2428c276d0c52d6b6b
@@ -240,7 +240,7 @@ ScriptedImporter:
       additiveSortOrder: 0
       cellRect:
         x: 15
-        y: 1
+        y: 0
         width: 33
         height: 21
       spriteId: ea86db8a946ce314089bd6cb99e417a0
@@ -249,7 +249,7 @@ ScriptedImporter:
       additiveSortOrder: 0
       cellRect:
         x: 16
-        y: 1
+        y: 0
         width: 32
         height: 21
       spriteId: a6a6637f6e0d6ec42b8df95beb7834c4
@@ -258,7 +258,7 @@ ScriptedImporter:
       additiveSortOrder: 0
       cellRect:
         x: 14
-        y: 1
+        y: 0
         width: 34
         height: 21
       spriteId: e71b1535c4633a6468c8294dfa16263d

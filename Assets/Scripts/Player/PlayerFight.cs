@@ -3,9 +3,6 @@ using UnityEngine;
 
 public class PlayerFight : MonoBehaviour
 {
-    private SpriteRenderer spriteRenderer;
-    private Vector3 originalPosition;
-
     public BoxCollider2D attackHitbox;
 
     // COMBO
@@ -24,61 +21,30 @@ public class PlayerFight : MonoBehaviour
 
     void Start()
     {
-        animator = GetComponent<Animator>();
+        animator = GetComponentInChildren<Animator>();
         actionLock = GetComponent<PlayerActionLock>();
         player = GetComponent<Player>();
 
         attackHitbox.enabled = false;
-
-        spriteRenderer = GetComponent<SpriteRenderer>();
-
-        originalPosition =
-            attackHitbox.transform.localPosition;
     }
 
     void Update()
     {
         bool isLocked = actionLock != null && actionLock.IsLocked;
+        bool isDashing = player != null && player.IsDashing;
 
         if (comboWindowTimer > 0f)
         {
             comboWindowTimer -= Time.deltaTime;
         }
 
-        if (Input.GetMouseButtonDown(0) && !isAttacking && !isLocked)
+        if (Input.GetMouseButtonDown(0) && !isAttacking && !isLocked && !isDashing)
         {
-            TryAttack();
+            Attack();
         }
     }
 
-    private void TryAttack()
-    {
-        if (IsHoldingForward())
-        {
-            ForwardAttack();
-        }
-        else
-        {
-            NeutralAttack();
-        }
-    }
-
-    private bool IsHoldingForward()
-    {
-        float horizontalInput = Input.GetAxisRaw("Horizontal");
-
-        if (Mathf.Abs(horizontalInput) < 0.01f)
-        {
-            return false;
-        }
-
-        bool facingRight = !spriteRenderer.flipX;
-        bool holdingRight = horizontalInput > 0f;
-
-        return holdingRight == facingRight;
-    }
-
-    private void NeutralAttack()
+    private void Attack()
     {
         if (comboWindowTimer <= 0f)
         {
@@ -112,24 +78,6 @@ public class PlayerFight : MonoBehaviour
         }
     }
 
-    private void ForwardAttack()
-    {
-        isAttacking = true;
-
-        animator.Play("Player_Attack_Forward");
-
-        // Đòn tiến không nằm trong chuỗi 1-2-3, nên reset combo neutral về đòn 1
-        attackIndex = 0;
-
-        if (player != null)
-        {
-            float direction = spriteRenderer.flipX ? -1f : 1f;
-            player.StartDash(direction);
-        }
-
-        StartCoroutine(AttackHitboxRoutine());
-    }
-
     private IEnumerator AttackHitboxRoutine()
     {
         yield return new WaitForSeconds(0.1f);
@@ -145,27 +93,4 @@ public class PlayerFight : MonoBehaviour
         isAttacking = false;
         comboWindowTimer = comboResetTime;
     }
-
-    private void LateUpdate()
-    {
-        if (spriteRenderer.flipX)
-        {
-            attackHitbox.transform.localPosition =
-                new Vector3(
-                    -Mathf.Abs(originalPosition.x),
-                    originalPosition.y,
-                    originalPosition.z
-                );
-        }
-        else
-        {
-            attackHitbox.transform.localPosition =
-                new Vector3(
-                    Mathf.Abs(originalPosition.x),
-                    originalPosition.y,
-                    originalPosition.z
-                );
-        }
-    }
-
 }
