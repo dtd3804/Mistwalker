@@ -31,7 +31,11 @@ public class Player : MonoBehaviour
     [Header("Bounce Pad")]
     public float bouncePadForce = 15f;
 
-    // DEBUG
+    [Header("Death")]
+    public float deathReloadDelay = 3f;
+    private bool isDead;
+
+    // DEBUG (xoá khi làm xong hệ thống mở khoá)
     [Header("Debug")]
     public bool debugUnlockAllSkills = true;
 
@@ -69,6 +73,8 @@ public class Player : MonoBehaviour
 
     public bool IsFacingRight => isFacingRight;
     public bool IsDashing => isDashing;
+    public bool IsDead => isDead;
+    public bool IsGrounded => isGround;
 
     // SKILL UNLOCK
     private bool HasDash => debugUnlockAllSkills || GameManager.Instance.data.hasDash;
@@ -85,6 +91,8 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        ApplyEquipmentStats();
+
         ReadMoveInput();
         UpdateFacingDirection();
 
@@ -122,7 +130,7 @@ public class Player : MonoBehaviour
     {
         if (other.CompareTag("Enemy") || other.CompareTag("Environment"))
         {
-            if (invincibilityTimer > 0f)
+            if (invincibilityTimer > 0f || isDead)
             {
                 return;
             }
@@ -159,10 +167,24 @@ public class Player : MonoBehaviour
 
 
 
+    // EQUIPMENT STATS
+    private void ApplyEquipmentStats()
+    {
+        bool wearingCape = GameManager.Instance.IsWearing(ItemIds.CAPE);
+        bool wearingHat = GameManager.Instance.IsWearing(ItemIds.HAT);
+
+        data.bonusJumpHeight = wearingCape ? data.capeJumpHeight : 0f;
+        data.bonusMaxFallSpeed = wearingCape ? data.capeMaxFallSpeed : 0f;
+        data.bonusRunSpeed = wearingHat ? data.hatRunSpeed : 0f;
+        data.bonusDamage = wearingHat ? data.hatDamage : 0;
+    }
+
+
+
     // MOVEMENT
     private void ReadMoveInput()
     {
-        bool blocked = (actionLock != null && actionLock.IsLocked) || isDashing;
+        bool blocked = (actionLock != null && actionLock.IsLocked) || isDashing || isDead;
         moveInput = blocked ? 0f : Input.GetAxisRaw("Horizontal");
     }
 
@@ -205,7 +227,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        float targetSpeed = moveInput * data.runMaxSpeed;
+        float targetSpeed = moveInput * data.RunMaxSpeed;
         bool hasInput = Mathf.Abs(targetSpeed) > 0.01f;
 
         float accelRate = hasInput ? data.RunAccelAmount : data.RunDeccelAmount;
@@ -265,7 +287,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if ((actionLock != null && actionLock.IsLocked) || isDashing)
+        if ((actionLock != null && actionLock.IsLocked) || isDashing || isDead)
         {
             return;
         }
@@ -297,13 +319,13 @@ public class Player : MonoBehaviour
 
     private void UpdateJumpState()
     {
-        // Tha space khi dang bay: tat nhay
+        // Thả phím nhảy khi đang bay lên: cắt cú nhảy
         if (!Input.GetKey(KeyCode.Space) && isJumping && rb.linearVelocityY > 0f)
         {
             isJumpCut = true;
         }
 
-        // Chuyen sang trag thai roi sau nhay
+        // Qua đỉnh nhảy: chuyển sang trạng thái rơi sau nhảy
         if (isJumping && rb.linearVelocityY <= 0f)
         {
             isJumping = false;
@@ -347,9 +369,9 @@ public class Player : MonoBehaviour
 
         rb.gravityScale = gravityScale;
 
-        if (rb.linearVelocityY < -data.maxFallSpeed)
+        if (rb.linearVelocityY < -data.MaxFallSpeed)
         {
-            rb.linearVelocity = new Vector2(rb.linearVelocityX, -data.maxFallSpeed);
+            rb.linearVelocity = new Vector2(rb.linearVelocityX, -data.MaxFallSpeed);
         }
     }
 
@@ -368,7 +390,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if (!HasDash || isDashing || dashCooldownTimer > 0f)
+        if (!HasDash || isDashing || isDead || dashCooldownTimer > 0f)
         {
             return;
         }
@@ -409,6 +431,11 @@ public class Player : MonoBehaviour
     // ANIMATION
     private void UpdateAnimation()
     {
+        if (isDead)
+        {
+            return;
+        }
+
         if (playerFight != null && playerFight.IsAttacking)
         {
             return;
@@ -446,12 +473,17 @@ public class Player : MonoBehaviour
         }
     }
 
+    public void GrantInvincibility(float duration)
+    {
+        invincibilityTimer = Mathf.Max(invincibilityTimer, duration);
+    }
+
     private void TakeDamage(int amount, Vector3 sourcePosition, float knockbackForce, float knockbackUpForce, float lockDuration)
     {
         PlaySFX(hurtClip);
         health -= amount;
 
-        // KNOCKBACK
+        // KNOCKBACK (tạm tắt)
         // float pushDirection = transform.position.x < sourcePosition.x ? -1f : 1f;
         // rb.linearVelocity = new Vector2(pushDirection * knockbackForce, knockbackUpForce);
 
@@ -495,6 +527,20 @@ public class Player : MonoBehaviour
 
     private void Die()
     {
+        if (isDead)
+        {
+            return;
+        }
+
+        isDead = true;
+        animator.Play("Player_Death");
+        StartCoroutine(ReloadAfterDeath());
+    }
+
+    private IEnumerator ReloadAfterDeath()
+    {
+        yield return new WaitForSeconds(deathReloadDelay);
+
         UnityEngine.SceneManagement.SceneManager.LoadScene(
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
         );

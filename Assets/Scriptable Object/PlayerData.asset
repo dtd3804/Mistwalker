@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PlayerData
   m_EditorClassIdentifier: Assembly-CSharp::PlayerData
   runMaxSpeed: 5
-  runAcceleration: 1.5
+  runAcceleration: 1
   runDecceleration: 1.5
   accelInAir: 0.65
   deccelInAir: 0.65
@@ -31,3 +31,7 @@ MonoBehaviour:
   dashSpeed: 12
   dashDuration: 0.15
   dashCooldown: 3
+  capeJumpHeight: 0.3
+  capeMaxFallSpeed: -3
+  hatRunSpeed: 1
+  hatDamage: 10

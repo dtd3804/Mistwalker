@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class AttackHitbox : MonoBehaviour
 {
-    public int damage = 20;
+    [HideInInspector] public int damage;
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
