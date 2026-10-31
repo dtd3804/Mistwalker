@@ -34,4 +34,4 @@ MonoBehaviour:
   capeJumpHeight: 0.3
   capeMaxFallSpeed: -3
   hatRunSpeed: 1
-  hatDamage: 10
+  hatDamage: 5

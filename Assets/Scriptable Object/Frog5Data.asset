@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 851c3f0c75bb25d4ab98675abe45f5ec, type: 3}
+  m_Name: Frog5Data
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  animPrefix: Frog5
+  maxHealth: 400
+  coinReward: 20
+  contactDamage: 30
+  tongueDamage: 50
+  patrolSpeed: 1.2
+  chaseSpeed: 1.8
+  patrolDuration: 3
+  idleDuration: 6
+  detectRange: 3
+  loseExtraRange: 6
+  verticalTolerance: 3
+  tongueRange: 3.3
+  tongueWindup: 0.6
+  tongueActive: 0.3
+  tongueDuration: 1.1
+  attackCooldown: 2.5
+  canBeStunned: 0
+  stunDuration: 1
+  deathDuration: 1

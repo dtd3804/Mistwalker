@@ -31,6 +31,11 @@ public class Player : MonoBehaviour
     [Header("Bounce Pad")]
     public float bouncePadForce = 15f;
 
+    [Header("Stomp")]
+    public int stompDamage = 10;
+    public float stompBounceForce = 10f;
+    public float stompInvincibility = 0.2f;
+
     [Header("Death")]
     public float deathReloadDelay = 3f;
     private bool isDead;
@@ -64,6 +69,9 @@ public class Player : MonoBehaviour
     private float dashTimer;
     private float dashCooldownTimer;
     private float dashDirection;
+
+    // Vận tốc dọc trước bước vật lý, dùng để biết đang rơi xuống lúc va chạm
+    private float velocityYBeforePhysics;
 
     private const int MAX_HEALTH = 100;
     private const int DEFAULT_DAMAGE_AMOUNT = 10;
@@ -112,12 +120,19 @@ public class Player : MonoBehaviour
 
     private void FixedUpdate()
     {
+        velocityYBeforePhysics = rb.linearVelocity.y;
+
         CheckGrounded();
         ApplyHorizontalMovement();
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if (TryStomp(collision))
+        {
+            return;
+        }
+
         HandleContact(collision.gameObject, collision.transform.position);
     }
 
@@ -131,6 +146,14 @@ public class Player : MonoBehaviour
         if (other.CompareTag("Enemy") || other.CompareTag("Environment"))
         {
             if (invincibilityTimer > 0f || isDead)
+            {
+                return;
+            }
+
+            // Kẻ địch đang choáng hoặc đã chết thì không gây sát thương chạm
+            Enemy enemy = other.GetComponentInParent<Enemy>();
+
+            if (enemy != null && !enemy.CanHurtPlayer)
             {
                 return;
             }
@@ -500,6 +523,45 @@ public class Player : MonoBehaviour
         {
             Die();
         }
+    }
+
+    // Giẫm lên kẻ địch: chân phải ở nửa trên thân kẻ địch và đang rơi xuống
+    private bool TryStomp(Collision2D collision)
+    {
+        if (isDead)
+        {
+            return false;
+        }
+
+        EnemyHealth enemyHealth = collision.gameObject.GetComponent<EnemyHealth>();
+
+        if (enemyHealth == null)
+        {
+            return false;
+        }
+
+        float feetY = collision.otherCollider.bounds.min.y;
+        float enemyCenterY = collision.collider.bounds.center.y;
+
+        bool isAbove = feetY >= enemyCenterY;
+        bool isFalling = velocityYBeforePhysics <= 0.1f;
+
+        if (!isAbove || !isFalling)
+        {
+            return false;
+        }
+
+        enemyHealth.TakeStompDamage(stompDamage);
+
+        // Nảy lên, không mất máu
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, stompBounceForce);
+
+        isJumping = false;
+        isJumpCut = false;
+
+        GrantInvincibility(stompInvincibility);
+
+        return true;
     }
 
     private void HandleBouncePad()
