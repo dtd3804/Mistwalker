@@ -28,12 +28,8 @@ public class Player : MonoBehaviour
     public float invincibilityDuration = 0.5f;
     private float invincibilityTimer;
 
-    [Header("Bounce Pad")]
-    public float bouncePadForce = 15f;
-
     [Header("Stomp")]
     public int stompDamage = 10;
-    public float stompBounceForce = 10f;
     public float stompInvincibility = 0.2f;
 
     [Header("Death")]
@@ -64,6 +60,11 @@ public class Player : MonoBehaviour
     private bool isJumping;
     private bool isJumpFalling;
     private bool isJumpCut;
+    private bool isStompJump;
+
+    // JUMP PAD: tấm đang đứng lên, và độ cao cộng thêm đã chốt lúc nhảy (giữ tới khi chạm đất)
+    private JumpPad currentJumpPad;
+    private float latchedJumpPadBonus;
 
     private bool isDashing;
     private float dashTimer;
@@ -167,10 +168,6 @@ public class Player : MonoBehaviour
 
             TakeDamage(amount, sourcePosition, knockback, knockbackUp, lockDuration);
         }
-        else if (other.CompareTag("BouncePad"))
-        {
-            HandleBouncePad();
-        }
     }
 
 
@@ -196,7 +193,7 @@ public class Player : MonoBehaviour
         bool wearingCape = GameManager.Instance.IsWearing(ItemIds.CAPE);
         bool wearingHat = GameManager.Instance.IsWearing(ItemIds.HAT);
 
-        data.bonusJumpHeight = wearingCape ? data.capeJumpHeight : 0f;
+        data.bonusJumpHeight = (wearingCape ? data.capeJumpHeight : 0f) + latchedJumpPadBonus;
         data.bonusMaxFallSpeed = wearingCape ? data.capeMaxFallSpeed : 0f;
         data.bonusRunSpeed = wearingHat ? data.hatRunSpeed : 0f;
         data.bonusDamage = wearingHat ? data.hatDamage : 0;
@@ -331,19 +328,42 @@ public class Player : MonoBehaviour
 
     private void DoJump()
     {
+        // Đứng trên tấm tăng nhảy thì chốt độ cao cộng thêm cho cú nhảy này (giữ tới khi chạm đất)
+        if (currentJumpPad != null && isGround)
+        {
+            latchedJumpPadBonus = currentJumpPad.extraJumpHeight;
+            ApplyEquipmentStats();
+        }
+
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, data.JumpVelocity);
 
         isJumping = true;
         isJumpFalling = false;
         isJumpCut = false;
+        isStompJump = false;
 
         PlaySFX(jumpClip);
     }
 
+    // Giẫm lên kẻ địch tính như một lần nhảy: cao bằng nhảy thường, không bị cắt, hồi lại lượt nhảy đôi
+    private void DoStompJump()
+    {
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, data.JumpVelocity);
+
+        isJumping = true;
+        isJumpFalling = false;
+        isJumpCut = false;
+        isStompJump = true;
+
+        extraJump = MaxExtraJump;
+        coyoteTimeCounter = 0f;
+        jumpBufferCounter = 0f;
+    }
+
     private void UpdateJumpState()
     {
-        // Thả phím nhảy khi đang bay lên: cắt cú nhảy
-        if (!Input.GetKey(KeyCode.Space) && isJumping && rb.linearVelocityY > 0f)
+        // Thả phím nhảy khi đang bay lên: cắt cú nhảy (không áp dụng cho cú nảy khi giẫm)
+        if (!Input.GetKey(KeyCode.Space) && isJumping && !isStompJump && rb.linearVelocityY > 0f)
         {
             isJumpCut = true;
         }
@@ -353,12 +373,28 @@ public class Player : MonoBehaviour
         {
             isJumping = false;
             isJumpFalling = true;
+            isStompJump = false;
         }
 
         if (isGround && !isJumping)
         {
             isJumpFalling = false;
             isJumpCut = false;
+            latchedJumpPadBonus = 0f;
+        }
+    }
+
+    // JUMP PAD (JumpPad gọi khi người chơi bước vào / rời tấm)
+    public void EnterJumpPad(JumpPad pad)
+    {
+        currentJumpPad = pad;
+    }
+
+    public void ExitJumpPad(JumpPad pad)
+    {
+        if (currentJumpPad == pad)
+        {
+            currentJumpPad = null;
         }
     }
 
@@ -553,23 +589,12 @@ public class Player : MonoBehaviour
 
         enemyHealth.TakeStompDamage(stompDamage);
 
-        // Nảy lên, không mất máu
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, stompBounceForce);
-
-        isJumping = false;
-        isJumpCut = false;
+        // Không mất máu, nảy lên như một lần nhảy
+        DoStompJump();
 
         GrantInvincibility(stompInvincibility);
 
         return true;
-    }
-
-    private void HandleBouncePad()
-    {
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, bouncePadForce);
-
-        isJumping = false;
-        isJumpCut = false;
     }
 
     private IEnumerator BlinkRed()
