@@ -11,8 +11,8 @@ public class Enemy : MonoBehaviour
     [Header("Check")]
     public Transform groundCheck;
     public Transform wallCheck;
-    public float groundDistance = 0.1f;
-    public float wallDistance = 0.1f;
+    public float groundDistance = 0.3f;
+    public float wallDistance = 0.2f;
     public LayerMask groundLayer;
 
     // TONGUE
@@ -329,11 +329,8 @@ public class Enemy : MonoBehaviour
             col.enabled = false;
         }
 
-        // Cộng xu thẳng cho người chơi (tạm dùng Player.coins)
-        if (playerScript != null)
-        {
-            playerScript.coins += data.coinReward;
-        }
+        // Cộng xu thẳng vào dữ liệu người chơi
+        GameManager.Instance.AddCoins(data.coinReward);
 
         PlayAnim("Death", true);
 

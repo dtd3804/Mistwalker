@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -77,6 +78,17 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // SKILLS
+    public void UnlockDash()
+    {
+        data.hasDash = true;
+    }
+
+    public void UnlockDoubleJump()
+    {
+        data.hasDoubleJump = true;
+    }
+
     // Mũ và áo choàng: phải sở hữu và đang mặc thì mới có hiệu lực
     public bool IsWearing(string id)
     {
@@ -132,6 +144,89 @@ public class GameManager : MonoBehaviour
         data.equippedWeapon = owned[(current + 1) % owned.Count];
     }
 
+    // COINS
+    public int Coins => data.coins;
+
+    // UI (CoinUI) lắng nghe để cập nhật số xu
+    public event System.Action OnCoinsChanged;
+
+    public void AddCoins(int amount)
+    {
+        data.coins += amount;
+        OnCoinsChanged?.Invoke();
+    }
+
+    public bool HasCollectedCoin(string id)
+    {
+        return data.collectedCoins.Contains(id);
+    }
+
+    public void CollectCoin(string id, int amount)
+    {
+        data.collectedCoins.Add(id);
+        AddCoins(amount);
+    }
+
+    // CHECKPOINT
+    // Chỉ nhận checkpoint có số thứ tự lớn hơn, để quay lại checkpoint cũ không làm lùi tiến trình
+    public void SetCheckpoint(int order, Vector2 position)
+    {
+        string scene = SceneManager.GetActiveScene().name;
+
+        if (data.checkpointScene == scene && order <= data.checkpointOrder)
+        {
+            return;
+        }
+
+        data.checkpointScene = scene;
+        data.checkpointOrder = order;
+        data.checkpointX = position.x;
+        data.checkpointY = position.y;
+
+        Save();
+    }
+
+    public bool TryGetCheckpoint(out Vector2 position)
+    {
+        position = new Vector2(data.checkpointX, data.checkpointY);
+
+        return data.checkpointScene == SceneManager.GetActiveScene().name;
+    }
+
+    // Chạm cờ qua màn: lưu tiến độ, xoá checkpoint và danh sách xu đã nhặt của màn này
+    public void CompleteLevel(int levelReachedValue)
+    {
+        string scene = SceneManager.GetActiveScene().name;
+
+        data.levelReached = Mathf.Max(data.levelReached, levelReachedValue);
+
+        data.checkpointScene = "";
+        data.checkpointOrder = 0;
+
+        data.collectedCoins.RemoveAll(id => id.StartsWith(scene + "_"));
+
+        Save();
+    }
+
+    // Chết: nạp lại bản lưu gần nhất (xu, vật phẩm, kỹ năng nhặt sau checkpoint sẽ mất)
+    public void RevertToCheckpoint()
+    {
+        bool hatOn = data.hatOn;
+        bool capeOn = data.capeOn;
+        string weapon = data.equippedWeapon;
+
+        Load();
+
+        // Giữ lựa chọn mặc đồ và vũ khí đang cầm nếu vẫn còn sở hữu
+        data.hatOn = hatOn;
+        data.capeOn = capeOn;
+
+        if (HasItem(weapon))
+        {
+            data.equippedWeapon = weapon;
+        }
+    }
+
     // SAVE / LOAD
     public void Save()
     {
@@ -143,11 +238,17 @@ public class GameManager : MonoBehaviour
     {
         string json = PlayerPrefs.GetString(SAVE_KEY, "");
         data = string.IsNullOrEmpty(json) ? new GameData() : JsonUtility.FromJson<GameData>(json);
+
+        OnCoinsChanged?.Invoke();
     }
 
+    // Chuột phải vào component GameManager lúc đang Play để xoá bản lưu khi test
+    [ContextMenu("Reset Save")]
     public void ResetData()
     {
         data = new GameData();
         Save();
+
+        OnCoinsChanged?.Invoke();
     }
 }

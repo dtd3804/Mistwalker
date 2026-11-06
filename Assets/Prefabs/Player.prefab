@@ -524,9 +524,11 @@ GameObject:
   - component: {fileID: 4996094341806257433}
   - component: {fileID: 6116782729248985093}
   - component: {fileID: 7954060532193466660}
+  - component: {fileID: 8939246158125277825}
+  - component: {fileID: 7604328458065568483}
   - component: {fileID: 6513443750780591965}
   - component: {fileID: 4799542343142317554}
-  - component: {fileID: 4860454145783357227}
+  - component: {fileID: 20166210796544942}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -729,22 +731,43 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
   data: {fileID: 11400000, guid: 71a3c1294fa88ec439d3e2245b199240, type: 2}
-  coins: 0
-  health: 100
+  jumpClip: {fileID: 0}
+  hurtClip: {fileID: 0}
+  stompDamage: 10
+  stompInvincibility: 0.2
+  debugUnlockAllSkills: 1
+--- !u!114 &8939246158125277825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9098767837063815517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2d073bd0390594587aa709943ba528, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   groundCheck: {fileID: 1479515340123836592}
   groundCheckRadius: 0.2
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  jumpClip: {fileID: 0}
-  hurtClip: {fileID: 0}
+--- !u!114 &7604328458065568483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9098767837063815517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 466a3e4d1ec8c6647b97be1b50c83363, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+  health: 100
   invincibilityDuration: 0.5
-  bouncePadForce: 10
-  stompDamage: 10
-  stompBounceForce: 10
-  stompInvincibility: 0.2
   deathReloadDelay: 3
-  debugUnlockAllSkills: 1
 --- !u!114 &6513443750780591965
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -779,7 +802,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d5918cc1772bba48a6abbfe91dda194, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerActionLock
---- !u!114 &4860454145783357227
+--- !u!114 &20166210796544942
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

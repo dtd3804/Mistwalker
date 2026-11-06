@@ -23,4 +23,17 @@ public class GameData
     // SKILLS
     public bool hasDash;
     public bool hasDoubleJump;
+
+    // COINS
+    public int coins;
+    public List<string> collectedCoins = new List<string>();
+
+    // PROGRESS
+    public int levelReached;
+
+    // CHECKPOINT (rỗng nghĩa là chưa có checkpoint nào trong màn đang chơi)
+    public string checkpointScene = "";
+    public int checkpointOrder;
+    public float checkpointX;
+    public float checkpointY;
 }

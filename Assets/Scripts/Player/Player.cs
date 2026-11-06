@@ -1,130 +1,68 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
 
+// Điều phối: giữ dữ liệu, âm thanh, trang bị, va chạm. Di chuyển ở PlayerMovement, máu ở PlayerHealth
+[DefaultExecutionOrder(-10)]
+[RequireComponent(typeof(PlayerMovement))]
+[RequireComponent(typeof(PlayerHealth))]
 public class Player : MonoBehaviour
 {
     // DATA
     [Header("Data")]
     public PlayerData data;
 
-    // STATS
-    [Header("Stats")]
-    public int coins;
-    public int health = 100;
-
-    // GROUND CHECK
-    [Header("Ground Check")]
-    public Transform groundCheck;
-    public float groundCheckRadius = 0.2f;
-    public LayerMask groundLayer;
-
     // AUDIO
     [Header("Audio")]
     public AudioClip jumpClip;
     public AudioClip hurtClip;
 
-    [Header("Combat")]
-    public float invincibilityDuration = 0.5f;
-    private float invincibilityTimer;
-
     [Header("Stomp")]
     public int stompDamage = 10;
     public float stompInvincibility = 0.2f;
-
-    [Header("Death")]
-    public float deathReloadDelay = 3f;
-    private bool isDead;
 
     // DEBUG (xoá khi làm xong hệ thống mở khoá)
     [Header("Debug")]
     public bool debugUnlockAllSkills = true;
 
     // COMPONENT REFERENCES
-    private Rigidbody2D rb;
-    private Animator animator;
-    private SpriteRenderer[] spriteRenderers;
+    private PlayerMovement movement;
+    private PlayerHealth health;
     private AudioSource audioSource;
-    private PlayerFight playerFight;
-    private PlayerActionLock actionLock;
-    private Image healthImage;
 
-    // RUNTIME STATE
-    private bool isGround;
-    private float moveInput;
-    private bool isFacingRight = true;
-
-    private int extraJump;
-    private float coyoteTimeCounter;
-    private float jumpBufferCounter;
-    private bool isJumping;
-    private bool isJumpFalling;
-    private bool isJumpCut;
-    private bool isStompJump;
-
-    // JUMP PAD: tấm đang đứng lên, và độ cao cộng thêm đã chốt lúc nhảy (giữ tới khi chạm đất)
-    private JumpPad currentJumpPad;
-    private float latchedJumpPadBonus;
-
-    private bool isDashing;
-    private float dashTimer;
-    private float dashCooldownTimer;
-    private float dashDirection;
-
-    // Vận tốc dọc trước bước vật lý, dùng để biết đang rơi xuống lúc va chạm
-    private float velocityYBeforePhysics;
-
-    private const int MAX_HEALTH = 100;
     private const int DEFAULT_DAMAGE_AMOUNT = 10;
     private const float DEFAULT_KNOCKBACK_FORCE = 7.5f;
     private const float DEFAULT_KNOCKBACK_UP_FORCE = 3f;
     private const float DEFAULT_KNOCKBACK_LOCK_DURATION = 0.1f;
 
-    public bool IsFacingRight => isFacingRight;
-    public bool IsDashing => isDashing;
-    public bool IsDead => isDead;
-    public bool IsGrounded => isGround;
+    // Các script khác (PlayerFight, Enemy, JumpPad...) vẫn đọc trạng thái qua Player như cũ
+    public bool IsFacingRight => movement.IsFacingRight;
+    public bool IsDashing => movement.IsDashing;
+    public bool IsGrounded => movement.IsGrounded;
+    public bool IsDead => health.IsDead;
 
     // SKILL UNLOCK
-    private bool HasDash => debugUnlockAllSkills || GameManager.Instance.data.hasDash;
-    private int MaxExtraJump => (debugUnlockAllSkills || GameManager.Instance.data.hasDoubleJump) ? 1 : 0;
-
-
+    public bool HasDash => debugUnlockAllSkills || GameManager.Instance.data.hasDash;
+    public int MaxExtraJump => (debugUnlockAllSkills || GameManager.Instance.data.hasDoubleJump) ? 1 : 0;
 
     // UNITY LIFECYCLE
+    void Awake()
+    {
+        movement = GetComponent<PlayerMovement>();
+        health = GetComponent<PlayerHealth>();
+        audioSource = GetComponent<AudioSource>();
+    }
+
     void Start()
     {
-        CacheComponents();
-        extraJump = MaxExtraJump;
+        // Hồi sinh tại checkpoint đã kích hoạt trong màn này
+        if (GameManager.Instance.TryGetCheckpoint(out Vector2 checkpointPosition))
+        {
+            transform.position = checkpointPosition;
+        }
     }
 
     void Update()
     {
         ApplyEquipmentStats();
-
-        ReadMoveInput();
-        UpdateFacingDirection();
-
-        UpdateGroundedTimers();
-        UpdateJumpBuffer();
-        TryConsumeJump();
-        UpdateJumpState();
-
-        TryDash();
-        UpdateDash();
-
-        UpdateAnimation();
-        UpdateGravity();
-        UpdateHealthUI();
-        UpdateInvincibility();
-    }
-
-    private void FixedUpdate()
-    {
-        velocityYBeforePhysics = rb.linearVelocity.y;
-
-        CheckGrounded();
-        ApplyHorizontalMovement();
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -142,11 +80,24 @@ public class Player : MonoBehaviour
         HandleContact(collision.gameObject, collision.transform.position);
     }
 
+    // EQUIPMENT STATS
+    public void ApplyEquipmentStats()
+    {
+        bool wearingCape = GameManager.Instance.IsWearing(ItemIds.CAPE);
+        bool wearingHat = GameManager.Instance.IsWearing(ItemIds.HAT);
+
+        data.bonusJumpHeight = (wearingCape ? data.capeJumpHeight : 0f) + movement.LatchedJumpPadBonus;
+        data.bonusMaxFallSpeed = wearingCape ? data.capeMaxFallSpeed : 0f;
+        data.bonusRunSpeed = wearingHat ? data.hatRunSpeed : 0f;
+        data.bonusDamage = wearingHat ? data.hatDamage : 0;
+    }
+
+    // CONTACT
     private void HandleContact(GameObject other, Vector3 sourcePosition)
     {
         if (other.CompareTag("Enemy") || other.CompareTag("Environment"))
         {
-            if (invincibilityTimer > 0f || isDead)
+            if (health.IsInvincible || health.IsDead)
             {
                 return;
             }
@@ -166,405 +117,14 @@ public class Player : MonoBehaviour
             float knockbackUp = damageSource != null ? damageSource.knockbackUpForce : DEFAULT_KNOCKBACK_UP_FORCE;
             float lockDuration = damageSource != null ? damageSource.knockbackLockDuration : DEFAULT_KNOCKBACK_LOCK_DURATION;
 
-            TakeDamage(amount, sourcePosition, knockback, knockbackUp, lockDuration);
-        }
-    }
-
-
-
-    // SETUP
-    private void CacheComponents()
-    {
-        rb = GetComponent<Rigidbody2D>();
-        animator = GetComponentInChildren<Animator>();
-        spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
-        audioSource = GetComponent<AudioSource>();
-        playerFight = GetComponent<PlayerFight>();
-        actionLock = GetComponent<PlayerActionLock>();
-
-        healthImage = GameObject.FindWithTag("Health").GetComponent<Image>();
-    }
-
-
-
-    // EQUIPMENT STATS
-    private void ApplyEquipmentStats()
-    {
-        bool wearingCape = GameManager.Instance.IsWearing(ItemIds.CAPE);
-        bool wearingHat = GameManager.Instance.IsWearing(ItemIds.HAT);
-
-        data.bonusJumpHeight = (wearingCape ? data.capeJumpHeight : 0f) + latchedJumpPadBonus;
-        data.bonusMaxFallSpeed = wearingCape ? data.capeMaxFallSpeed : 0f;
-        data.bonusRunSpeed = wearingHat ? data.hatRunSpeed : 0f;
-        data.bonusDamage = wearingHat ? data.hatDamage : 0;
-    }
-
-
-
-    // MOVEMENT
-    private void ReadMoveInput()
-    {
-        bool blocked = (actionLock != null && actionLock.IsLocked) || isDashing || isDead;
-        moveInput = blocked ? 0f : Input.GetAxisRaw("Horizontal");
-    }
-
-    private void UpdateFacingDirection()
-    {
-        if (actionLock != null && actionLock.IsLocked)
-        {
-            return;
-        }
-
-        if (isDashing || (playerFight != null && playerFight.IsAttacking))
-        {
-            return;
-        }
-
-        if (moveInput > 0f && !isFacingRight)
-        {
-            Turn();
-        }
-        else if (moveInput < 0f && isFacingRight)
-        {
-            Turn();
-        }
-    }
-
-    private void Turn()
-    {
-        Vector3 scale = transform.localScale;
-        scale.x *= -1f;
-        transform.localScale = scale;
-
-        isFacingRight = !isFacingRight;
-    }
-
-    private void ApplyHorizontalMovement()
-    {
-        if (isDashing)
-        {
-            rb.linearVelocity = new Vector2(dashDirection * data.dashSpeed, 0f);
-            return;
-        }
-
-        float targetSpeed = moveInput * data.RunMaxSpeed;
-        bool hasInput = Mathf.Abs(targetSpeed) > 0.01f;
-
-        float accelRate = hasInput ? data.RunAccelAmount : data.RunDeccelAmount;
-
-        if (!isGround)
-        {
-            accelRate *= hasInput ? data.accelInAir : data.deccelInAir;
-        }
-
-        if (IsInJumpHang())
-        {
-            accelRate *= data.jumpHangAccelerationMult;
-            targetSpeed *= data.jumpHangMaxSpeedMult;
-        }
-
-        float speedDif = targetSpeed - rb.linearVelocityX;
-        rb.AddForce(new Vector2(speedDif * accelRate * rb.mass, 0f), ForceMode2D.Force);
-    }
-
-    private void CheckGrounded()
-    {
-        isGround = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-    }
-
-
-
-    // JUMP
-    private void UpdateGroundedTimers()
-    {
-        if (isGround && !isJumping)
-        {
-            coyoteTimeCounter = data.coyoteTime;
-            extraJump = MaxExtraJump;
-        }
-        else
-        {
-            coyoteTimeCounter -= Time.deltaTime;
-        }
-    }
-
-    private void UpdateJumpBuffer()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            jumpBufferCounter = data.jumpBufferTime;
-        }
-        else
-        {
-            jumpBufferCounter -= Time.deltaTime;
-        }
-    }
-
-    private void TryConsumeJump()
-    {
-        if (jumpBufferCounter <= 0f)
-        {
-            return;
-        }
-
-        if ((actionLock != null && actionLock.IsLocked) || isDashing || isDead)
-        {
-            return;
-        }
-
-        if (coyoteTimeCounter > 0f)
-        {
-            DoJump();
-            coyoteTimeCounter = 0f;
-            jumpBufferCounter = 0f;
-        }
-        else if (extraJump > 0)
-        {
-            DoJump();
-            extraJump--;
-            jumpBufferCounter = 0f;
-        }
-    }
-
-    private void DoJump()
-    {
-        // Đứng trên tấm tăng nhảy thì chốt độ cao cộng thêm cho cú nhảy này (giữ tới khi chạm đất)
-        if (currentJumpPad != null && isGround)
-        {
-            latchedJumpPadBonus = currentJumpPad.extraJumpHeight;
-            ApplyEquipmentStats();
-        }
-
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, data.JumpVelocity);
-
-        isJumping = true;
-        isJumpFalling = false;
-        isJumpCut = false;
-        isStompJump = false;
-
-        PlaySFX(jumpClip);
-    }
-
-    // Giẫm lên kẻ địch tính như một lần nhảy: cao bằng nhảy thường, không bị cắt, hồi lại lượt nhảy đôi
-    private void DoStompJump()
-    {
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, data.JumpVelocity);
-
-        isJumping = true;
-        isJumpFalling = false;
-        isJumpCut = false;
-        isStompJump = true;
-
-        extraJump = MaxExtraJump;
-        coyoteTimeCounter = 0f;
-        jumpBufferCounter = 0f;
-    }
-
-    private void UpdateJumpState()
-    {
-        // Thả phím nhảy khi đang bay lên: cắt cú nhảy (không áp dụng cho cú nảy khi giẫm)
-        if (!Input.GetKey(KeyCode.Space) && isJumping && !isStompJump && rb.linearVelocityY > 0f)
-        {
-            isJumpCut = true;
-        }
-
-        // Qua đỉnh nhảy: chuyển sang trạng thái rơi sau nhảy
-        if (isJumping && rb.linearVelocityY <= 0f)
-        {
-            isJumping = false;
-            isJumpFalling = true;
-            isStompJump = false;
-        }
-
-        if (isGround && !isJumping)
-        {
-            isJumpFalling = false;
-            isJumpCut = false;
-            latchedJumpPadBonus = 0f;
-        }
-    }
-
-    // JUMP PAD (JumpPad gọi khi người chơi bước vào / rời tấm)
-    public void EnterJumpPad(JumpPad pad)
-    {
-        currentJumpPad = pad;
-    }
-
-    public void ExitJumpPad(JumpPad pad)
-    {
-        if (currentJumpPad == pad)
-        {
-            currentJumpPad = null;
-        }
-    }
-
-    private bool IsInJumpHang()
-    {
-        return (isJumping || isJumpFalling) && Mathf.Abs(rb.linearVelocityY) < data.jumpHangTimeThreshold;
-    }
-
-    private void UpdateGravity()
-    {
-        if (isDashing)
-        {
-            rb.gravityScale = 0f;
-            return;
-        }
-
-        float gravityScale = data.GravityScale;
-
-        if (isJumpCut)
-        {
-            gravityScale *= data.jumpCutGravityMult;
-        }
-        else if (IsInJumpHang())
-        {
-            gravityScale *= data.jumpHangGravityMult;
-        }
-        else if (rb.linearVelocityY < 0f)
-        {
-            gravityScale *= data.fallGravityMult;
-        }
-
-        rb.gravityScale = gravityScale;
-
-        if (rb.linearVelocityY < -data.MaxFallSpeed)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocityX, -data.MaxFallSpeed);
-        }
-    }
-
-
-
-    // DASH
-    private void TryDash()
-    {
-        if (dashCooldownTimer > 0f)
-        {
-            dashCooldownTimer -= Time.deltaTime;
-        }
-
-        if (!Input.GetMouseButtonDown(1))
-        {
-            return;
-        }
-
-        if (!HasDash || isDashing || isDead || dashCooldownTimer > 0f)
-        {
-            return;
-        }
-
-        if (actionLock != null && actionLock.IsLocked)
-        {
-            return;
-        }
-
-        if (playerFight != null && playerFight.IsAttacking)
-        {
-            return;
-        }
-
-        isDashing = true;
-        dashDirection = isFacingRight ? 1f : -1f;
-        dashTimer = data.dashDuration;
-        dashCooldownTimer = data.dashCooldown;
-    }
-
-    private void UpdateDash()
-    {
-        if (!isDashing)
-        {
-            return;
-        }
-
-        dashTimer -= Time.deltaTime;
-
-        if (dashTimer <= 0f)
-        {
-            isDashing = false;
-        }
-    }
-
-
-
-    // ANIMATION
-    private void UpdateAnimation()
-    {
-        if (isDead)
-        {
-            return;
-        }
-
-        if (playerFight != null && playerFight.IsAttacking)
-        {
-            return;
-        }
-
-        if (isDashing && animator.HasState(0, Animator.StringToHash("Player_Dash")))
-        {
-            animator.Play("Player_Dash");
-            return;
-        }
-
-        if (isGround)
-        {
-            animator.Play(Mathf.Abs(moveInput) < 0.01f ? "Player_Idle" : "Player_Run");
-        }
-        else
-        {
-            animator.Play(rb.linearVelocityY > 0 ? "Player_Jump" : "Player_Fall");
-        }
-    }
-
-
-
-    // HEALTH / DAMAGE
-    private void UpdateHealthUI()
-    {
-        healthImage.fillAmount = Mathf.Clamp01((float)health / MAX_HEALTH);
-    }
-
-    private void UpdateInvincibility()
-    {
-        if (invincibilityTimer > 0f)
-        {
-            invincibilityTimer -= Time.deltaTime;
-        }
-    }
-
-    public void GrantInvincibility(float duration)
-    {
-        invincibilityTimer = Mathf.Max(invincibilityTimer, duration);
-    }
-
-    private void TakeDamage(int amount, Vector3 sourcePosition, float knockbackForce, float knockbackUpForce, float lockDuration)
-    {
-        PlaySFX(hurtClip);
-        health -= amount;
-
-        // KNOCKBACK (tạm tắt)
-        // float pushDirection = transform.position.x < sourcePosition.x ? -1f : 1f;
-        // rb.linearVelocity = new Vector2(pushDirection * knockbackForce, knockbackUpForce);
-
-        // if (actionLock != null)
-        // {
-        //     actionLock.Lock(lockDuration);
-        // }
-
-        invincibilityTimer = invincibilityDuration;
-
-        StartCoroutine(BlinkRed());
-
-        if (health <= 0)
-        {
-            Die();
+            health.TakeDamage(amount, sourcePosition, knockback, knockbackUp, lockDuration);
         }
     }
 
     // Giẫm lên kẻ địch: chân phải ở nửa trên thân kẻ địch và đang rơi xuống
     private bool TryStomp(Collision2D collision)
     {
-        if (isDead)
+        if (health.IsDead)
         {
             return false;
         }
@@ -580,7 +140,7 @@ public class Player : MonoBehaviour
         float enemyCenterY = collision.collider.bounds.center.y;
 
         bool isAbove = feetY >= enemyCenterY;
-        bool isFalling = velocityYBeforePhysics <= 0.1f;
+        bool isFalling = movement.VelocityYBeforePhysics <= 0.1f;
 
         if (!isAbove || !isFalling)
         {
@@ -590,50 +150,28 @@ public class Player : MonoBehaviour
         enemyHealth.TakeStompDamage(stompDamage);
 
         // Không mất máu, nảy lên như một lần nhảy
-        DoStompJump();
+        movement.StompBounce();
 
-        GrantInvincibility(stompInvincibility);
+        health.GrantInvincibility(stompInvincibility);
 
         return true;
     }
 
-    private IEnumerator BlinkRed()
+    // FORWARDING (JumpPad, PlayerFight... gọi qua Player)
+    public void GrantInvincibility(float duration)
     {
-        SetSpriteColor(Color.red);
-        yield return new WaitForSeconds(0.1f);
-        SetSpriteColor(Color.white);
+        health.GrantInvincibility(duration);
     }
 
-    private void SetSpriteColor(Color color)
+    public void EnterJumpPad(JumpPad pad)
     {
-        foreach (SpriteRenderer sr in spriteRenderers)
-        {
-            sr.color = color;
-        }
+        movement.EnterJumpPad(pad);
     }
 
-    private void Die()
+    public void ExitJumpPad(JumpPad pad)
     {
-        if (isDead)
-        {
-            return;
-        }
-
-        isDead = true;
-        animator.Play("Player_Death");
-        StartCoroutine(ReloadAfterDeath());
+        movement.ExitJumpPad(pad);
     }
-
-    private IEnumerator ReloadAfterDeath()
-    {
-        yield return new WaitForSeconds(deathReloadDelay);
-
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
-        );
-    }
-
-
 
     // AUDIO
     public void PlaySFX(AudioClip audioClip, float volume = 1f)
