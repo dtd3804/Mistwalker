@@ -1,52 +1,43 @@
 fileFormatVersion: 2
-guid: 81f47fd8fea2b1e4eb65475bcc8bfdd9
+guid: c6b9d149e2b17cc45949ca833a2b3283
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5795738425302088441
-    second: Player1Fightv3_0
+      213: -2322180950842035098
+    second: Coins_0
   - first:
-      213: -3782014099414712802
-    second: Player1Fightv3_1
+      213: -4893972260818282012
+    second: Coins_1
   - first:
-      213: -2113317998319678289
-    second: Player1Fightv3_2
+      213: -6323751108524238166
+    second: Coins_2
   - first:
-      213: -7634722120412770468
-    second: Player1Fightv3_3
+      213: 2722280177590742205
+    second: Coins_3
   - first:
-      213: -1559205397825124798
-    second: Player1Fightv3_4
+      213: 6582046967323461550
+    second: Coins_4
   - first:
-      213: -7788186304975887929
-    second: Player1Fightv3_5
+      213: 1942777921290549423
+    second: Coins_5
   - first:
-      213: 4238063799482463813
-    second: Player1Fightv3_6
+      213: 8793606821965667882
+    second: Coins_6
   - first:
-      213: 4919446223926077391
-    second: Player1Fightv3_7
+      213: 3444832735345940322
+    second: Coins_7
   - first:
-      213: -1846538247390557830
-    second: Player1Fightv3_8
+      213: -4986890610287934012
+    second: Coins_8
   - first:
-      213: 7961923461457651115
-    second: Player1Fightv3_9
+      213: 6143208460787649835
+    second: Coins_9
   - first:
-      213: 6797169764051055288
-    second: Player1Fightv3_10
+      213: 7609282858266732271
+    second: Coins_10
   - first:
-      213: 5234052844008944994
-    second: Player1Fightv3_11
-  - first:
-      213: 2142392577719315387
-    second: Player1Fightv3_12
-  - first:
-      213: -8739911763805871109
-    second: Player1Fightv3_13
-  - first:
-      213: -3280309004540127856
-    second: Player1Fightv3_14
+      213: -6288512792030432889
+    second: Coins_11
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -114,7 +105,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 128
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 0
@@ -139,7 +130,33 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
     buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -155,13 +172,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Idle 0
+      name: CoinsCopper1
       rect:
         serializedVersion: 2
-        x: 0
-        y: 34
-        width: 16
-        height: 16
+        x: 4
+        y: 36
+        width: 8
+        height: 8
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -170,64 +187,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9fa763304699e6050800000000000000
-      internalID: 5795738425302088441
+      spriteID: 664b1e88ab4f5cfd0800000000000000
+      internalID: -2322180950842035098
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Atk 1
+      name: CoinsCopper2
       rect:
         serializedVersion: 2
-        x: 32
-        y: 34
-        width: 32
-        height: 16
-      alignment: 9
-      pivot: {x: 0.25, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e1efddce636938bc0800000000000000
-      internalID: -3782014099414712802
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Atk 2
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 34
-        width: 32
-        height: 16
-      alignment: 9
-      pivot: {x: 0.25, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c5fcaf59ea40c0690800000000000000
-      internalID: -7634722120412770468
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Atk 3
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 17
-        width: 16
-        height: 16
+        x: 21
+        y: 36
+        width: 6
+        height: 8
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -236,64 +209,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7c1a957b1ddcae390800000000000000
-      internalID: -7788186304975887929
+      spriteID: 4e99f4d782e151cb0800000000000000
+      internalID: -4893972260818282012
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Atk 4
+      name: CoinsCopper3
       rect:
         serializedVersion: 2
-        x: 32
-        y: 17
-        width: 32
-        height: 16
-      alignment: 9
-      pivot: {x: 0.25, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 54638974290a0da30800000000000000
-      internalID: 4238063799482463813
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Atk 5
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 17
-        width: 32
-        height: 16
-      alignment: 9
-      pivot: {x: 0.25, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a790d145f37cf56e0800000000000000
-      internalID: -1846538247390557830
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Atk 6
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 16
-        height: 16
+        x: 38
+        y: 36
+        width: 4
+        height: 8
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -302,52 +231,206 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8b2f94033e5645e50800000000000000
-      internalID: 6797169764051055288
+      spriteID: aaa1e681fd58d38a0800000000000000
+      internalID: -6323751108524238166
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Atk 7
+      name: CoinsCopper4
       rect:
         serializedVersion: 2
-        x: 32
-        y: 0
-        width: 32
-        height: 16
-      alignment: 9
-      pivot: {x: 0.25, y: 0.5}
+        x: 53
+        y: 36
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 265b6c6945713a840800000000000000
-      internalID: 5234052844008944994
+      spriteID: dbc2264f56b77c520800000000000000
+      internalID: 2722280177590742205
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Atk 8
+      name: CoinsSilver1
       rect:
         serializedVersion: 2
-        x: 64
-        y: 0
-        width: 32
-        height: 16
-      alignment: 9
-      pivot: {x: 0.25, y: 0.5}
+        x: 4
+        y: 20
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bf3e71e8e8895b680800000000000000
-      internalID: -8739911763805871109
+      spriteID: ea78046f7d0285b50800000000000000
+      internalID: 6582046967323461550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoinsSilver2
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 20
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa8bef3e93226fa10800000000000000
+      internalID: 1942777921290549423
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoinsSilver3
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 20
+        width: 4
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2e17b560da290a70800000000000000
+      internalID: 8793606821965667882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoinsSilver4
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 20
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2679eec0f118ecf20800000000000000
+      internalID: 3444832735345940322
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoinGold1
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 4
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c58e0069610bcab0800000000000000
+      internalID: -4986890610287934012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoinGold2
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 4
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2d0c660c8f014550800000000000000
+      internalID: 6143208460787649835
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoinGold3
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 4
+        width: 4
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe62572a17a999960800000000000000
+      internalID: 7609282858266732271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CoinGold4
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 4
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 781b6810fe6bab8a0800000000000000
+      internalID: -6288512792030432889
       vertices: []
       indices: 
       edges: []
@@ -356,7 +439,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5b6ad89bc4d612045b9a97d83a7381c3
+    spriteID: fa30ae0e366040e4b98339bf2e410d00
     internalID: 0
     vertices: []
     indices: 
@@ -366,21 +449,18 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Atk 1: -3782014099414712802
-      Atk 2: -7634722120412770468
-      Atk 3: -7788186304975887929
-      Atk 4: 4238063799482463813
-      Atk 5: -1846538247390557830
-      Atk 6: 6797169764051055288
-      Atk 7: 5234052844008944994
-      Atk 8: -8739911763805871109
-      Idle 0: 5795738425302088441
-      Player1Fightv3_12: 2142392577719315387
-      Player1Fightv3_14: -3280309004540127856
-      Player1Fightv3_2: -2113317998319678289
-      Player1Fightv3_4: -1559205397825124798
-      Player1Fightv3_7: 4919446223926077391
-      Player1Fightv3_9: 7961923461457651115
+      CoinGold1: -4986890610287934012
+      CoinGold2: 6143208460787649835
+      CoinGold3: 7609282858266732271
+      CoinGold4: -6288512792030432889
+      CoinsCopper1: -2322180950842035098
+      CoinsCopper2: -4893972260818282012
+      CoinsCopper3: -6323751108524238166
+      CoinsCopper4: 2722280177590742205
+      CoinsSilver1: 6582046967323461550
+      CoinsSilver2: 1942777921290549423
+      CoinsSilver3: 8793606821965667882
+      CoinsSilver4: 3444832735345940322
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

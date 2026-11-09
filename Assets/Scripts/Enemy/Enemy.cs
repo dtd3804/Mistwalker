@@ -292,9 +292,11 @@ public class Enemy : MonoBehaviour
     }
 
     // STUN & DEATH (EnemyHealth gọi)
-    public void Stun()
+    // duration = 0: dùng thời gian choáng của loại ếch này
+    // ignoreImmunity = true: choáng cả loại ếch không bị giẫm choáng (dùng cho ánh sáng)
+    public void Stun(float duration = 0f, bool ignoreImmunity = false)
     {
-        if (!data.canBeStunned || state == State.Dead)
+        if (state == State.Dead || (!data.canBeStunned && !ignoreImmunity))
         {
             return;
         }
@@ -308,7 +310,7 @@ public class Enemy : MonoBehaviour
         CancelAttack();
 
         state = State.Stunned;
-        stateTimer = data.stunDuration;
+        stateTimer = duration > 0f ? duration : data.stunDuration;
         PlayAnim("Stunned", true);
     }
 

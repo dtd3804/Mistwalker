@@ -28,7 +28,13 @@ public class EnemyHealth : MonoBehaviour
         Hurt(damage, true);
     }
 
-    private void Hurt(int damage, bool stun)
+    // Lightup: trừ máu và làm choáng mọi loại ếch trong stunTime giây
+    public void TakeLightDamage(int damage, float stunTime)
+    {
+        Hurt(damage, true, stunTime, true);
+    }
+
+    private void Hurt(int damage, bool stun, float stunTime = 0f, bool ignoreImmunity = false)
     {
         if (enemy.IsDead)
         {
@@ -52,7 +58,7 @@ public class EnemyHealth : MonoBehaviour
 
         if (stun)
         {
-            enemy.Stun();
+            enemy.Stun(stunTime, ignoreImmunity);
         }
     }
 

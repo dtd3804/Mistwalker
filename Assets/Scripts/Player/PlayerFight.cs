@@ -14,6 +14,9 @@ public class PlayerFight : MonoBehaviour
     public BoxCollider2D lightupHitbox;
     public int lightupDamage = 100;
     public float lightupCooldown = 6f;
+    public float lightupStunDuration = 2f;
+    // Bán kính thắp sáng đèn, tượng và làm lộ vật ẩn quanh người chơi
+    public float lightupRadius = 5f;
     private float lightupCooldownTimer;
 
     // COMBO
@@ -102,7 +105,9 @@ public class PlayerFight : MonoBehaviour
         actionLock.Lock(LIGHTUP_DURATION);
         player.GrantInvincibility(LIGHTUP_DURATION);
 
-        lightupHitbox.GetComponent<AttackHitbox>().damage = lightupDamage;
+        AttackHitbox lightupAttack = lightupHitbox.GetComponent<AttackHitbox>();
+        lightupAttack.damage = lightupDamage;
+        lightupAttack.stunDuration = lightupStunDuration;
 
         StartCoroutine(LightupRoutine());
     }
@@ -112,6 +117,9 @@ public class PlayerFight : MonoBehaviour
         yield return new WaitForSeconds(LIGHTUP_WINDUP);
 
         lightupHitbox.enabled = true;
+
+        // Thắp sáng đèn, tượng và làm lộ vật ẩn trong bán kính
+        LightReactive.Burst(transform.position, lightupRadius);
 
         yield return new WaitForSeconds(LIGHTUP_ACTIVE);
 
@@ -179,5 +187,12 @@ public class PlayerFight : MonoBehaviour
 
         isAttacking = false;
         comboWindowTimer = comboResetTime;
+    }
+
+    // Vẽ bán kính Lightup khi chọn Player trong Scene
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, lightupRadius);
     }
 }

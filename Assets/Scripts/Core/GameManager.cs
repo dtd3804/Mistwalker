@@ -167,6 +167,20 @@ public class GameManager : MonoBehaviour
         AddCoins(amount);
     }
 
+    // LAMPS
+    public bool IsLampLit(string id)
+    {
+        return data.litLamps.Contains(id);
+    }
+
+    public void LightLamp(string id)
+    {
+        if (!data.litLamps.Contains(id))
+        {
+            data.litLamps.Add(id);
+        }
+    }
+
     // CHECKPOINT
     // Chỉ nhận checkpoint có số thứ tự lớn hơn, để quay lại checkpoint cũ không làm lùi tiến trình
     public void SetCheckpoint(int order, Vector2 position)
@@ -184,6 +198,12 @@ public class GameManager : MonoBehaviour
         data.checkpointY = position.y;
 
         Save();
+    }
+
+    // Tượng nào có số thứ tự nhỏ hơn hoặc bằng checkpoint đã lưu thì đã sáng
+    public bool HasReachedCheckpoint(int order)
+    {
+        return data.checkpointScene == SceneManager.GetActiveScene().name && data.checkpointOrder >= order;
     }
 
     public bool TryGetCheckpoint(out Vector2 position)
@@ -204,6 +224,7 @@ public class GameManager : MonoBehaviour
         data.checkpointOrder = 0;
 
         data.collectedCoins.RemoveAll(id => id.StartsWith(scene + "_"));
+        data.litLamps.RemoveAll(id => id.StartsWith(scene + "_"));
 
         Save();
     }

@@ -28,6 +28,9 @@ public class GameData
     public int coins;
     public List<string> collectedCoins = new List<string>();
 
+    // LAMPS (mã những cây đèn đã thắp, lưu cùng lúc với checkpoint như xu)
+    public List<string> litLamps = new List<string>();
+
     // PROGRESS
     public int levelReached;
 
